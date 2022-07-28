@@ -1,0 +1,59 @@
+~/case/../run/
+#1  vim atm_in                                                            ! modify the initial setting of atmosphere input
+    &cam_history_nl                                                       ! edit the output variables
+    &can_initfiles_nl                                                     ! initial atmospheric status
+     ncdata   = "/home/.../Fclim/run/Fclim.cam.i.T0006-03-01-00000.nc"    ! 0006-03-01 moder starts from March 1 of the sixth year
+    &spmd_fv_inparm
+     npr_yz         = 32,2,2,32                                           ! 32*2 = 64cores  should be consistent within drv_in
+                                                                          ! can also be 32, 4, 4, 32 meaning 32*4=128 cores
+                                                                          ! 64, 2, 2, 64    64*2= 128 cores
+
+#2 vim docn.streams.txt.prescribed                                        ! modify the Input SST
+    <fileNames>
+    sst_HadOIBl_bc_1.9x2.5_2000climo_IO79.nc                              ! in this case, we replace SST_cpl with 
+                                                                          ! monthly mean SST in May-June of 1979-1992/1993-2018 over IO
+   vim docn_in                                                
+   streams = "docn.streams.txt.prescribed 1 0 0"                          ! SST only has annual cycle. SST in each year is the same.
+   
+#3 vim drv_in
+   ntasks = 64                                                            ! consistent with the setting in atm_in
+   case_name = "Fclim79atn_IO"                                                      ! consistent with the submit file
+   start_ymd = 00010301                                                   ! consistent with the setting in atm_in: line 5 
+   stop_n    = 4                                                          ! run 4 months from March. so the results should be March to June
+   
+#4 vim sub79atn
+   
+   mpirun -np 64 ../bld/./cesm.exe                                        ! 64 cores. be consistent with atm_in 
+   nn=6                                                                   ! be consistent with ncdata in atm_in: starting from 0006
+                                                                          ! revise filenames (*3), to be consistent with the case_name in drv_in
+  if [ -f "/gpfs1/scratch/ruhzhang/cesm2.1/my_cesm_sandbox/cime/case/Fexp4/run/ *1 Fclim79atn_IO 1* .cam.h0.0001-06.nc" ];then
+    echo "ensemble R$nn 完成，转移数据"
+    mkdir -p /gpfs1/scratch/ruhzhang/cesm2.1/my_cesm_sandbox/cime/case/Fexp4/R$nn
+    mv -f /gpfs1/scratch/ruhzhang/cesm2.1/my_cesm_sandbox/cime/case/Fexp4/run/*2 Fclim79atn_IO 2* .cam.h0.* /gpfs1/scratch/ruhzhang/cesm2.1/my_cesm_sandbox/cime/case/Fexp4/R$nn
+    mv atm.log* /gpfs1/scratch/ruhzhang/cesm2.1/my_cesm_sandbox/cime/case/Fexp4/R$nn
+    rm -rf /gpfs1/scratch/ruhzhang/cesm2.1/my_cesm_sandbox/cime/case/Fexp4/run/*3 Fclim79atn_IO.*
+    
+    $nn == 65                                                             ! 30<nn<65  30: 一般实验至少30年  65：原始数据只有65年
+    
+------------------ end --------------------------
+    
+#5 take a test before run the real case: run 2 hours to check the model setting
+
+   vim submitA  ; 
+  
+   #!/bin/bash
+
+   #SBATCH --partition=debugq
+   #SBATCH --nodes=1                # 2 computer nodes
+   #SBATCH --ntasks-per-node=32     # 32 MPI tasks on EACH NODE
+   #SBATCH --cpus-per-task=2        # 4 OpenMP threads on EACH TASK, i.e. 1x32x4=128 cores
+   #SBATCH --time=02:00:00          # Time limit hrs:min:sec                                      ! just run 2 hours
+
+   mpirun -np 64 ../bld/./cesm.exe
+   
+ #6 submit tasks 
+ 
+    sbatch submitA
+    squeue         ! check the status
+    
+     
