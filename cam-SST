@@ -11,7 +11,7 @@
 #2 vim docn.streams.txt.prescribed                                        ! modify the Input SST
     <fileNames>
     sst_HadOIBl_bc_1.9x2.5_2000climo_IO79.nc                              ! in this case, we replace SST_cpl with 
-                                                                          ! monthly mean SST in May-June of 1979-1992/1993-2018 over IO
+                                                                          ! monthly mean SST in May-June of 1979-1992/1993-2018 over IO (NCEP ERSST)
    vim docn_in                                                
    streams = "docn.streams.txt.prescribed 1 0 0"                          ! SST only has annual cycle. SST in each year is the same.
    
