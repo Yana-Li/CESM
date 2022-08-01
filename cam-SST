@@ -51,9 +51,10 @@
 
    mpirun -np 64 ../bld/./cesm.exe
    
- #6 submit tasks 
+ #6 submit tasks to burgundy.hpc
  
     sbatch submitA
     squeue         ! check the status
+    scancel        ! kill tasks
     
      
